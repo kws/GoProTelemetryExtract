@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+const fs = require('fs');
 const path = require('path');
 const { extractInfo } = require('./helpers/mp4reader');
 
@@ -12,7 +12,11 @@ async function processAll(filenames) {
         const basename = path.basename(filename, ext);
         const output = path.join(dir, basename + '.json');
 
-        await extractInfo(filename, output);
+	if (!fs.existsSync(output)) {
+	    await extractInfo(filename, output);
+	} else {
+	    console.log(`Skipping ${basename} as telemetry file already exists: ${output}`)
+	}
     }
 }
 

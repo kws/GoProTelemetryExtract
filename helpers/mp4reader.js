@@ -17,10 +17,10 @@ function streamData(filename) {
             resolve({ videoData, mp4boxfile});
         };
 
-	const chunkSize = 100*1024*1024 // 100Mb
+	const chunkSize = 100*1024*1024; // 100Mb
 	const stream = fs.createReadStream(filename, {'highWaterMark': chunkSize});
 
-        let bytesRead = 0;
+	let bytesRead = 0;
 	stream.on('end', () => {
 	    console.log(`Flushing on end after ${bytesRead} bytes`);
 	    mp4boxfile.flush();
@@ -108,7 +108,7 @@ class SamplesAnalyser {
 	});
 	const rawData = toBuffer(uintArr);
 
-	const timing = {'samples': outputSamples, ...this.sampleMetadata}
+	const timing = {'samples': outputSamples, ...this.sampleMetadata};
 
 	this.data = {rawData, timing};
     }

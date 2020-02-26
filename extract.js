@@ -23,7 +23,7 @@ async function processAll(filenames) {
 const filenames = process.argv.slice(2);
 processAll(filenames)
     .then(() => console.log("Done"))
-    .catch(err => console.error("An error occurred", err))
+    .catch(err => console.error("An error occurred", err));
 
 
 

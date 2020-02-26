@@ -10,8 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "canvas": "^2.6.1",
     "gopro-telemetry": "^0.6.54",
     "gpmf-extract": "^0.1.13",
-    "mp4box": "latest"
-  }
+    "mathjs": "^6.6.0",
+    "mp4box": "latest",
+    "rematrix": "^0.4.1"
+  },
+  "devDependencies": {}
 }

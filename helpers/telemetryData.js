@@ -14,10 +14,10 @@ class TelemetryData {
         return this.telemetry['frames/second'];
     }
 
-    getMaxFrame() {
+    getMaxFrame(framerate) {
         const cts = this.gyroSamples.map(sample => sample.cts ? sample.cts : 0)
         const maxGyro = cts.reduce((cum, cur) => Math.max(cum, cur), 0);
-        return Math.ceil(this.getFrameRate()  * maxGyro / 1000);
+        return Math.ceil(framerate  * maxGyro / 1000);
     }
 
     getAccel() {

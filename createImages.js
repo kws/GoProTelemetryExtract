@@ -2,7 +2,11 @@
 const { createCanvas } = require('canvas');
 const fs = require('fs');
 const path = require('path');
-const { box } = require('./helpers/box');
+const AltTrace = require('./helpers/altTrace');
+const GForceBar = require('./helpers/gforceBar');
+const GpsTrace = require('./helpers/gpsTrace');
+const SpeedBar = require('./helpers/speedBar');
+
 
 const filename = process.argv[2];
 
@@ -42,9 +46,9 @@ accelSamples.forEach((sample, ix) => {
         Math.acos(value[1] / sample['abs']),
         Math.acos(value[2] / sample['abs']),
     ];
-    if (ix < 25 && Math.abs(9.8 - sample['abs']) <= 0.5) {
-        console.log(sample['index'], sample['abs'], sample['vector']);
-    }
+    // if (ix < 25 && Math.abs(9.8 - sample['abs']) <= 0.5) {
+    //     console.log(sample['index'], sample['abs'], sample['vector']);
+    // }
 });
 
 const gyroSamples = telemetry['1']['streams']['GYRO']['samples'];
@@ -59,7 +63,6 @@ gyroSamples.forEach((sample, ix) => {
         const vector = accelSamples[0]['vector'];
         // sample['orientation'] = [vector[0], vector[1], vector[2]];
         sample['orientation'] = [0,0,0];
-        console.log(sample['orientation']);
     } else {
         const delta_t = (sample['cts'] - gyroSamples[ix-1]['cts']) / 1000;
         const prevOrientation = gyroSamples[ix-1]['orientation'];
@@ -72,7 +75,7 @@ gyroSamples.forEach((sample, ix) => {
     sample['orientation_rad'] = sample['orientation'].map(degrees => degrees * 180 / Math.PI);
 });
 
-const gpsSamples = telemetry['1']['streams']['GPS5']['samples'];
+let gpsSamples = telemetry['1']['streams']['GPS5']['samples'];
 gpsSamples.forEach((sample, ix) => {
     sample['index'] = ix;
     if (ix > 0) {
@@ -82,7 +85,11 @@ gpsSamples.forEach((sample, ix) => {
     sample['alt'] = value[2];
     sample['speed3d'] = value[4];
     sample['speed3d_kph'] = sample['speed3d'] * 3.6
+
 });
+gpsSamples = gpsSamples.filter(sample => sample.sticky.precision < 1000);
+
+
 
 const framerate =  telemetry['frames/second'];
 
@@ -112,53 +119,36 @@ const maxFrame = Math.ceil(framerate * maxGyro / 1000);
 
 console.log('MAX FRAME', maxFrame);
 
+
+
 const canvas = createCanvas(1920, 1440);
 const ctx = canvas.getContext('2d');
-const skip = 5;
+const skip = 1;
+const gpsTrace = new GpsTrace(gpsSamples, {'x': 50, 'y': 100});
+const altTrace = new AltTrace(gpsSamples, {'x': 1450, 'y': 100});
+const speedBar = new SpeedBar(gpsSamples, {'x': 50, 'y': 50});
+const gForceBar = new GForceBar(accelSamples, {'x': 1450, 'y': 1300});
+
 for (let frame = 0; frame<maxFrame; frame += skip) {
     const ts = frame / framerate;
-
-    const gyro = findNearest(gyroSamples, ts);
-    const orientation = gyro['orientation'];
-
-    const accel = findNearest(accelSamples, ts);
-    const accelValue = accel['value'];
-    const accelVector = accel['vector'];
-
-    const gps = findNearest(gpsSamples, ts);
-
     console.log(frame, ts);
 
     ctx.clearRect(0,0,canvas.width, canvas.height);
 
-    box(ctx, ...gyro['orientation_rad']);
+    const gps = findNearest(gpsSamples, ts);
 
-    ctx.font = "50px Georgia";
-    ctx.fillText(`Speed: ${gps['speed3d_kph'].toFixed(2)} km/h`, 100, 100);
-    ctx.fillText(`Alt: ${gps['alt'].toFixed(2)} m`, 100, 150);
+    altTrace.drawTrace(ctx);
+    altTrace.drawLocation(ctx, gps);
 
-    try {
-        ctx.fillText(`Temp: ${gyro['sticky']['temperature [°C]'].toFixed(1)} °C`, 1200, 100);
-    } catch (e) {}
-    try {
-        ctx.fillText(`Fix: ${gps['sticky']['fix'].toFixed(2)}`, 1200, 150);
-    } catch (e) {}
-    try {
-        ctx.fillText(`Precision: ${gps['sticky']['precision'].toFixed(2)}`, 1200, 200);
-    } catch (e) {}
+    speedBar.drawBox(ctx, gps);
 
-    ctx.fillText(`F: ${frame}`, 100, 1250);
-    ctx.fillText(`X: ${(orientation[0]).toFixed(2)}`, 100, 1300);
-    ctx.fillText(`Y: ${(orientation[1]).toFixed(2)}`, 100, 1350);
-    ctx.fillText(`Z: ${(orientation[2]).toFixed(2)}`, 100, 1400);
+    gpsTrace.drawTrace(ctx);
+    gpsTrace.drawLocation(ctx, gps);
 
-    ctx.fillText(`ABS: ${accel['abs'].toFixed(2)}`, 1200, 1250);
-    ctx.fillText(`${accelValue[0] >= 0 ? 'down' : 'up'}: ${(accelVector[0] * 180 / Math.PI).toFixed(2)} ` +
-        `/ ${Math.abs(accelValue[0]).toFixed(2)}`, 1200, 1300);
-    ctx.fillText(`${accelValue[1] >= 0 ? 'right' : 'left'}: ${(accelVector[1] * 180 / Math.PI).toFixed(2)} ` +
-        `/ ${Math.abs(accelValue[1]).toFixed(2)}`, 1200, 1350);
-    ctx.fillText(`${accelValue[2] >= 0 ? 'forward' : 'back'}: ${(accelVector[2] * 180 / Math.PI).toFixed(2)} ` +
-        `/ ${Math.abs(accelValue[2]).toFixed(2)}`, 1200, 1400);
+    const accel = findNearest(accelSamples, ts);
+
+    gForceBar.drawBox(ctx, accel);
+    gForceBar.drawCircle(ctx, accel);
 
     const buffer = canvas.toBuffer();
     for (let x = 0 ; x<1; x++) {

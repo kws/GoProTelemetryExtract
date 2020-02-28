@@ -65,14 +65,12 @@ class GpsTrace {
         gpsScale.xPad = (options.size - (gpsScale.xMax - gpsScale.xMin) / gpsScale.scale) / 2;
         gpsScale.yPad = (options.size - (gpsScale.yMax - gpsScale.yMin) / gpsScale.scale) / 2;
 
-        console.log(gpsScale);
-
         this.gpsScale = gpsScale;
     }
 
     drawTrace(ctx) {
-        ctx.fillStyle = 'rgba(0,0,0,.2)';
-        ctx.fillRect(this.options.x, this.options.y, this.options.size, this.options.size);
+        // ctx.fillStyle = 'rgba(0,0,0,.2)';
+        // ctx.fillRect(this.options.x, this.options.y, this.options.size, this.options.size);
         this.samples.forEach((sample, ix) => {
             if (!sample.mercator) {
                 return;

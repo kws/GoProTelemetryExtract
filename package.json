@@ -11,13 +11,16 @@
   "license": "ISC",
   "dependencies": {
     "canvas": "^2.6.1",
+    "commander": "^4.1.1",
+    "fluent-ffmpeg": "^2.1.2",
     "google-palette": "git+https://github.com/google/palette.js.git#master",
     "gopro-telemetry": "^0.6.54",
     "gpmf-extract": "^0.1.13",
     "mathjs": "^6.6.0",
     "mp4box": "latest",
     "proj4": "^2.6.0",
-    "rematrix": "^0.4.1"
+    "rematrix": "^0.4.1",
+    "colors": "latest"
   },
   "devDependencies": {}
 }

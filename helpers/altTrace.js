@@ -30,8 +30,8 @@ class AltTrace {
     }
 
     drawTrace(ctx) {
-        ctx.fillStyle = 'rgba(0,0,0,.2)';
-        ctx.fillRect(this.options.x, this.options.y, this.options.size, this.options.size);
+        // ctx.fillStyle = 'rgba(0,0,0,.2)';
+        // ctx.fillRect(this.options.x, this.options.y, this.options.size, this.options.size);
         this.samples.forEach((sample, ix) => {
             const {x,y} = this.getLocation(sample);
             const color = this.getColor(sample)

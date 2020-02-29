@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "canvas": "^2.6.1",
+    "cli-progress": "^3.6.0",
+    "colors": "latest",
     "commander": "^4.1.1",
     "fluent-ffmpeg": "^2.1.2",
     "google-palette": "git+https://github.com/google/palette.js.git#master",
@@ -19,8 +21,7 @@
     "mathjs": "^6.6.0",
     "mp4box": "latest",
     "proj4": "^2.6.0",
-    "rematrix": "^0.4.1",
-    "colors": "latest"
+    "rematrix": "^0.4.1"
   },
   "devDependencies": {}
 }

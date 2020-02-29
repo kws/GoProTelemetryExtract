@@ -4,6 +4,7 @@ const path = require('path');
 const program = require('commander');
 const colors = require('colors');
 const ffmpeg = require('fluent-ffmpeg');
+const cliProgress = require('cli-progress');
 
 const TelemetryData = require('./helpers/telemetryData');
 const Renderer = require('./helpers/renderer');
@@ -30,56 +31,68 @@ const basename = path.basename(fileArg, baseExt);
 const mp4Ext = baseExt.toLowerCase() === '.mp4' ? baseExt : '.MP4';
 const telemetryExt = '.json';
 
-const videoFile = program.video ? program.video : path.join(dir, `${basename}${baseExt}`);
+const videoFile = program.video ? program.video : path.join(dir, `${basename}${mp4Ext}`);
 const telemetryFile = program.telemetry ? program.telemetry : path.join(dir, `${basename}${telemetryExt}`);
-const compositeFile = program.video ? program.video : path.join(dir, `${basename}-telemetry${baseExt}`);
+const compositeFile = program.video ? program.video : path.join(dir, `${basename}-telemetry${mp4Ext}`);
 
-const outputPath = path.join(program.imagedir, basename);
 
-if (!fs.existsSync(outputPath)) {
-    fs.mkdirSync(outputPath, { recursive: true });
-}
+ffmpeg.ffprobe(videoFile, function(err, metadata) {
+    const video_streams = metadata.streams.filter(s => s.codec_type === 'video');
+    // Just pick the first...?
+    const video_metadata = video_streams[0];
+    encode(video_metadata)
+});
 
-// if (program.delete) {
-//     const images = fs.readdirSync(outputPath);
-//     images.forEach(image => {
-//         fs.unlinkSync(path.join(outputPath, image))
-//     });
-// }
+function encode(video_metadata) {
+    const telemetryData = new TelemetryData(telemetryFile);
+    const renderer = new Renderer(telemetryData, program.framerate, program.frames ? program.frames : video_metadata.nb_frames);
 
-const telemetryData = new TelemetryData(telemetryFile);
-const renderer = new Renderer(telemetryData, program.framerate, program.frames);
+    // create new container
+    const multibar = new cliProgress.MultiBar({
+        clearOnComplete: false,
+        hideCursor: true,
+        format: '{bar} {percentage}% | {name} | ETA: {eta}s | {value}/{total}',
 
-const command = ffmpeg(videoFile)
-    .audioCodec('copy')
-    // .input(`${outputPath}/frame-*.png`)
-    .input(renderer.getStream())
-    // .inputOptions('-pattern_type glob')
-    .withInputFps(program.framerate)
-    .complexFilter([
-        {
-            filter: 'colorchannelmixer', options: 'aa=1.0',
-            inputs: ['1:v'], outputs: 'ovr'
-        },
-        {
-            filter: 'overlay',
-            inputs: ['0:v','ovr'], outputs: 'v'
-        },
-    ], ['v'])
-    .on('progress', function(progress) {
-        console.log('Processing: ',progress);
-    })
-    .on('error', function(err) {
-        console.log('An error occurred: ' + err.message);
-    })
-    .on('end', function() {
-        console.log('Processing finished !');
+    }, cliProgress.Presets.shades_grey);
+
+    // add bars
+    const imageBar = multibar.create(renderer.maxFrame, 0, {name: "Images"});
+    const videoBar = multibar.create(video_metadata.nb_frames, 0,  {name: "Video"});
+
+    renderer.on('frame', frame => {
+        imageBar.update(frame);
     });
 
-// Horrible hack since map automatically adds brackets
-command._complexFilters('-map', '0:a');
-if (program.frames) {
-    command.frames(program.frames)
-}
-command.save(compositeFile);
 
+    const command = ffmpeg(videoFile)
+        .audioCodec('copy')
+        .input(renderer.getStream())
+        .withInputFps(program.framerate)
+        .complexFilter([
+            {
+                filter: 'colorchannelmixer', options: 'aa=1.0',
+                inputs: ['1:v'], outputs: 'ovr'
+            },
+            {
+                filter: 'overlay',
+                inputs: ['0:v','ovr'], outputs: 'v'
+            },
+        ], ['v'])
+        .on('progress', function(progress) {
+            videoBar.update(progress.frames)
+        })
+        .on('error', function(err) {
+            console.log('An error occurred: ' + err.message);
+        })
+        .on('end', function() {
+            console.log('Processing finished !');
+        });
+
+    // Horrible hack since map automatically adds brackets
+    command._complexFilters('-map', '0:a');
+    if (program.frames) {
+        command.frames(program.frames)
+    }
+    command.save(compositeFile);
+
+}

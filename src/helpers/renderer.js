@@ -1,23 +1,21 @@
-const { Readable } = require('stream');
 const EventEmitter = require('events');
 
-const AltTrace = require('./altTrace');
-const GForceBar = require('./gforceBar');
-const GpsTrace = require('./gpsTrace');
-const SpeedBar = require('./speedBar');
+const AltTrace = require('../components/altTrace');
+const GForceBar = require('../components/gforceBar');
+const GpsTrace = require('../components/gpsTrace');
+const SpeedBar = require('../components/speedBar');
 
 class Renderer extends EventEmitter {
 
-    constructor(canvas, telemetryData, imageRate, maxFrames) {
+    constructor(telemetryData, imageRate, maxFrames) {
         super();
+
         this.telemetryData = telemetryData;
         this.imageRate = imageRate;
 
         this.gpsSamples = telemetryData.getGPS();
         this.accelSamples = telemetryData.getAccel();
 
-        this.canvas = canvas;
-        this.ctx = this.canvas.getContext('2d');
         this.gpsTrace = new GpsTrace(this.gpsSamples, {'x': 50, 'y': 100});
         this.altTrace = new AltTrace(this.gpsSamples, {'x': 1450, 'y': 100});
         this.speedBar = new SpeedBar(this.gpsSamples, {'x': 50, 'y': 50});
@@ -27,12 +25,12 @@ class Renderer extends EventEmitter {
         this.emit('max_frames', this.maxFrame);
 
     }
-    render(frame) {
+    render(canvas, frame) {
         this.emit('start_frame', frame, this.maxFrame);
-        const ctx = this.ctx;
+        const ctx = canvas.getContext('2d');
         const ts = frame / this.imageRate;
 
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const gps = this.telemetryData.findNearest(this.gpsSamples, ts);
 
@@ -52,43 +50,9 @@ class Renderer extends EventEmitter {
         this.emit('frame', frame, this.maxFrame);
     }
 
-    renderFrame(frame) {
-        this.render(frame);
-        return this.canvas.toBuffer();
-    }
 
-    getStream() {
-        return new RendererStream(this.maxFrame, this.renderFrame, {});
-    }
-
-    // writeFrames(outputPath) {
-    //     const frameDimensions = Math.ceil(Math.log10(this.maxFrame));
-    //     for (let frame = 0; frame < this.maxFrame; frame += 1) {
-    //         const buffer = this.renderFrame(frame);
-    //         fs.writeFileSync(`${outputPath}/frame-${String(frame).padStart(frameDimensions, '0')}.png`, buffer);
-    //     }
-    // }
 
 }
 
-class RendererStream extends Readable {
-    constructor(maxFrame, renderFrame, opt) {
-        super(opt);
-        this.maxFrame = maxFrame;
-        this.renderFrame = renderFrame;
-        this._index = 0;
-    }
-
-    _read() {
-        const i = this._index;
-        if (i > this.maxFrame)
-            this.push(null);
-        else {
-            const buffer = this.renderFrame(this._index);
-            this.push(buffer);
-        }
-        this._index++;
-    }
-}
 
 module.exports = Renderer;

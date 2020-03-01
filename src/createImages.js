@@ -8,7 +8,7 @@ const cliProgress = require('cli-progress');
 const { createCanvas } = require('canvas');
 
 const TelemetryData = require('./helpers/telemetryData');
-const Renderer = require('./helpers/renderer');
+const StreamRenderer = require('./helpers/streamRenderer');
 
 program
     .version('0.0.1')
@@ -51,8 +51,9 @@ function encode(video_metadata) {
     const telemetryData = new TelemetryData(telemetry);
 
     const canvas = createCanvas(video_metadata.coded_width, video_metadata.coded_height);
-    const renderer = new Renderer(canvas, telemetryData, program.framerate,
+    const renderer = new StreamRenderer(telemetryData, program.framerate,
         program.frames ? program.frames : video_metadata.nb_frames);
+    const renderingStream = renderer.getStream(canvas);
 
     // create new container
     const multibar = new cliProgress.MultiBar({
@@ -73,7 +74,7 @@ function encode(video_metadata) {
 
     const command = ffmpeg(videoFile)
         .audioCodec('copy')
-        .input(renderer.getStream())
+        .input(renderingStream)
         .withInputFps(program.framerate)
         .complexFilter([
             {

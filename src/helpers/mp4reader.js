@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const MP4Box = require('mp4box');
-const goproTelemetry = require(`gopro-telemetry`);
+const goproTelemetry = require('gopro-telemetry');
 
 /**
  * Streams any size file.

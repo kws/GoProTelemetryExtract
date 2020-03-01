@@ -45,7 +45,10 @@ ffmpeg.ffprobe(videoFile, function(err, metadata) {
 });
 
 function encode(video_metadata) {
-    const telemetryData = new TelemetryData(telemetryFile);
+    const telemetry = JSON.parse(
+        fs.readFileSync(telemetryFile).toLocaleString()
+    );
+    const telemetryData = new TelemetryData(telemetry);
 
     const canvas = createCanvas(video_metadata.coded_width, video_metadata.coded_height);
     const renderer = new Renderer(canvas, telemetryData, program.framerate,

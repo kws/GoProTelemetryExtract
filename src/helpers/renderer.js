@@ -27,7 +27,7 @@ class Renderer extends EventEmitter {
         this.emit('max_frames', this.maxFrame);
 
     }
-    render = (frame) => {
+    render(frame) {
         this.emit('start_frame', frame, this.maxFrame);
         const ctx = this.ctx;
         const ts = frame / this.imageRate;
@@ -52,22 +52,22 @@ class Renderer extends EventEmitter {
         this.emit('frame', frame, this.maxFrame);
     }
 
-    renderFrame = (frame) => {
+    renderFrame(frame) {
         this.render(frame);
         return this.canvas.toBuffer();
     }
 
-    getStream = () => {
+    getStream() {
         return new RendererStream(this.maxFrame, this.renderFrame, {});
     }
 
-    writeFrames = (outputPath) => {
-        const frameDimensions = Math.ceil(Math.log10(this.maxFrame));
-        for (let frame = 0; frame < this.maxFrame; frame += 1) {
-            const buffer = this.renderFrame(frame);
-            fs.writeFileSync(`${outputPath}/frame-${String(frame).padStart(frameDimensions, '0')}.png`, buffer);
-        }
-    }
+    // writeFrames(outputPath) {
+    //     const frameDimensions = Math.ceil(Math.log10(this.maxFrame));
+    //     for (let frame = 0; frame < this.maxFrame; frame += 1) {
+    //         const buffer = this.renderFrame(frame);
+    //         fs.writeFileSync(`${outputPath}/frame-${String(frame).padStart(frameDimensions, '0')}.png`, buffer);
+    //     }
+    // }
 
 }
 
@@ -79,7 +79,7 @@ class RendererStream extends Readable {
         this._index = 0;
     }
 
-    _read = () => {
+    _read() {
         const i = this._index;
         if (i > this.maxFrame)
             this.push(null);

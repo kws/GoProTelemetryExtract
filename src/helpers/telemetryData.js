@@ -1,10 +1,6 @@
-const fs = require('fs');
-
 class TelemetryData {
-    constructor(filename) {
-        this.telemetry = JSON.parse(
-            fs.readFileSync(filename).toLocaleString()
-        );
+    constructor(telemetry) {
+        this.telemetry = telemetry;
         this.accelSamples = prepareAccel(this.telemetry['1']['streams']['ACCL']['samples']);
         this.gyroSamples = prepareGyro(this.telemetry['1']['streams']['GYRO']['samples']);
         this.gpsSamples = prepareGPS(this.telemetry['1']['streams']['GPS5']['samples']);

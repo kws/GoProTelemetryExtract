@@ -1,4 +1,3 @@
-const { createCanvas } = require('canvas');
 const { Readable } = require('stream');
 const EventEmitter = require('events');
 
@@ -9,7 +8,7 @@ const SpeedBar = require('./speedBar');
 
 class Renderer extends EventEmitter {
 
-    constructor(telemetryData, imageRate, maxFrames) {
+    constructor(canvas, telemetryData, imageRate, maxFrames) {
         super();
         this.telemetryData = telemetryData;
         this.imageRate = imageRate;
@@ -17,7 +16,7 @@ class Renderer extends EventEmitter {
         this.gpsSamples = telemetryData.getGPS();
         this.accelSamples = telemetryData.getAccel();
 
-        this.canvas = createCanvas(1920, 1440);
+        this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d');
         this.gpsTrace = new GpsTrace(this.gpsSamples, {'x': 50, 'y': 100});
         this.altTrace = new AltTrace(this.gpsSamples, {'x': 1450, 'y': 100});
@@ -28,8 +27,7 @@ class Renderer extends EventEmitter {
         this.emit('max_frames', this.maxFrame);
 
     }
-
-    renderFrame = (frame) => {
+    render = (frame) => {
         this.emit('start_frame', frame, this.maxFrame);
         const ctx = this.ctx;
         const ts = frame / this.imageRate;
@@ -52,6 +50,10 @@ class Renderer extends EventEmitter {
         this.gForceBar.drawCircle(ctx, accel);
 
         this.emit('frame', frame, this.maxFrame);
+    }
+
+    renderFrame = (frame) => {
+        this.render(frame);
         return this.canvas.toBuffer();
     }
 

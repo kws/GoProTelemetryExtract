@@ -5,6 +5,7 @@ const program = require('commander');
 const colors = require('colors');
 const ffmpeg = require('fluent-ffmpeg');
 const cliProgress = require('cli-progress');
+const { createCanvas } = require('canvas');
 
 const TelemetryData = require('./helpers/telemetryData');
 const Renderer = require('./helpers/renderer');
@@ -45,7 +46,10 @@ ffmpeg.ffprobe(videoFile, function(err, metadata) {
 
 function encode(video_metadata) {
     const telemetryData = new TelemetryData(telemetryFile);
-    const renderer = new Renderer(telemetryData, program.framerate, program.frames ? program.frames : video_metadata.nb_frames);
+
+    const canvas = createCanvas(video_metadata.coded_width, video_metadata.coded_height);
+    const renderer = new Renderer(canvas, telemetryData, program.framerate,
+        program.frames ? program.frames : video_metadata.nb_frames);
 
     // create new container
     const multibar = new cliProgress.MultiBar({
@@ -82,10 +86,12 @@ function encode(video_metadata) {
             videoBar.update(progress.frames)
         })
         .on('error', function(err) {
-            console.log('An error occurred: ' + err.message);
+            console.log('\nAn error occurred: ' + err.message);
+            process.exit(-1);
         })
         .on('end', function() {
-            console.log('Processing finished !');
+            console.log('\nProcessing finished !');
+            process.exit(0);
         });
 
     // Horrible hack since map automatically adds brackets

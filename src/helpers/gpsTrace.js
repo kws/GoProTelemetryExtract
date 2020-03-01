@@ -1,8 +1,11 @@
-const proj4 = require('proj4');
+function _moduleHack(obj) {
+    return obj.__esModule ? obj.default : obj;
+}
+const proj4 = _moduleHack(require('proj4'));
 const palette = require('google-palette');
-const source = new proj4.Proj('EPSG:4326');
-const dest = new proj4.Proj('EPSG:3785');
 
+const source = proj4.Proj('EPSG:4326');
+const dest = proj4.Proj('EPSG:3785');
 
 class GpsTrace {
     constructor(samples, options) {

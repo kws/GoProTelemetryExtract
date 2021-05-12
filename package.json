@@ -19,7 +19,7 @@
     "google-palette": "git+https://github.com/google/palette.js.git#master",
     "gopro-telemetry": "^0.6.54",
     "gpmf-extract": "^0.1.13",
-    "mathjs": "^6.6.0",
+    "mathjs": "^7.5.1",
     "mp4box": "latest",
     "proj4": "^2.6.0",
     "rematrix": "^0.4.1"
